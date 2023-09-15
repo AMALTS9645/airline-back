@@ -1,0 +1,27 @@
+from mongoengine import Document, IntField, DateTimeField, StringField
+
+
+class RoutesData(Document):
+    common_duration = IntField()
+    min_duration = IntField()
+    max_duration = IntField()
+    flights_per_day = StringField()
+    flights_per_week = IntField()
+    airline_name = StringField()
+    airline_code = StringField()
+    day1 = StringField()
+    day2 = StringField()
+    day3 = StringField()
+    day4 = StringField()
+    day5 = StringField()
+    day6 = StringField()
+    day7 = StringField()
+    iata_from = StringField()
+    iata_to = StringField()
+    class_business = IntField()
+    class_economy = IntField()
+    class_first = IntField()
+    is_scheduled_passenger = IntField()
+    is_cargo = IntField()
+    createdAt = DateTimeField()
+    updatedAt = DateTimeField()
