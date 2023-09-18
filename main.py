@@ -16,6 +16,7 @@ from models.basemodels.airlineresponse import AirlinesResponse
 from models.basemodels.airportsresponse import AirportsResponse
 from models.basemodels.autocompletemodelresponse import AirportAutoResponse
 from models.basemodels.AirportAutoRequest import AirportAutoRequest
+from models.basemodels.detailed_itinerary import ItineraryRequest, ItineraryResponse
 app = FastAPI()
 
 
@@ -278,6 +279,36 @@ async def airport_autocomplete(request_data: AirportAutoRequest):
             raise HTTPException(status_code=404, detail="No matching airports found.")
 
         return [{"code": airport.code, "name": airport.name} for airport in matching_airports]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/get_detailed_itinerary", response_model=List[ItineraryResponse])
+async def get_detailed_itinerary(request_data: ItineraryRequest):
+    try:
+        filter_dict = {
+            "uid__in": request_data.routes,
+        }
+        routes = RoutesData.objects(**filter_dict)
+
+        itinerary_details = []
+        for route in routes:
+            itinerary_details.append(ItineraryResponse(
+                id=route.uid,
+                flying_from={
+                    "name": route.airport_from,
+                    "code": route.iata_from
+                },
+                flying_to={
+                    "name": route.airport_to,
+                    "code": route.iata_to
+                },
+                airline={
+                    "name": route.airline_name,
+                    "code": route.airline_code
+                }
+            ))
+        return itinerary_details
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
