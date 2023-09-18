@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, BooleanField, URLField
+from mongoengine import Document, StringField, BooleanField, URLField, DateTimeField
 
 
 class Airlines(Document):
@@ -6,3 +6,5 @@ class Airlines(Document):
     code = StringField(unique=True)
     isLowCost = BooleanField()
     logo = URLField()
+    createdAt = DateTimeField()
+    updatedAt = DateTimeField()

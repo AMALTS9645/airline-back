@@ -14,6 +14,8 @@ from models.basemodels.multifilterrequest import MultiFilterRequest
 from models.basemodels.recommendationresponse import RecommendationResponse
 from models.basemodels.airlineresponse import AirlinesResponse
 from models.basemodels.airportsresponse import AirportsResponse
+from models.basemodels.autocompletemodelresponse import AirportAutoResponse
+from models.basemodels.AirportAutoRequest import AirportAutoRequest
 app = FastAPI()
 
 
@@ -235,8 +237,10 @@ async def get_multi_recommendations(request_data: MultiFlightRecommendationReque
         routes = RoutesData.objects(**filter_dict)
 
         recommendations = []
+
         for route in routes:
-            recommendations.append(RecommendationResponse(
+            recommendations.append(MultiFlightRecommendationResponse(
+
                 common_duration=route.common_duration,
                 min_duration=route.min_duration,
                 max_duration=route.max_duration,
@@ -259,10 +263,23 @@ async def get_multi_recommendations(request_data: MultiFlightRecommendationReque
                 is_scheduled_passenger=route.is_scheduled_passenger,
                 is_cargo=route.is_cargo
             ))
+
         return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/airport/autocomplete", response_model=List[AirportAutoResponse])
+async def airport_autocomplete(request_data: AirportAutoRequest):
+    try:
+        matching_airports = Airports.objects(name__iregex=f".*{request_data.search_string}.*")[:request_data.limit]
+
+        if not matching_airports:
+            raise HTTPException(status_code=404, detail="No matching airports found.")
+
+        return [{"code": airport.code, "name": airport.name} for airport in matching_airports]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
     connect(host="mongodb+srv://amal:Vv14t8Ig7MukqL5R@cluster0.x4j0e.mongodb.net/flight-routes")

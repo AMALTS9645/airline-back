@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, LongField, IntField, DecimalField
+from mongoengine import Document, StringField, LongField, IntField, DecimalField, DateTimeField
 
 
 class Airports(Document):
@@ -15,3 +15,5 @@ class Airports(Document):
     lon = DecimalField()
     woeid = IntField()
     tz = StringField()
+    createdAt = DateTimeField()
+    updatedAt = DateTimeField()

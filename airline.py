@@ -1,17 +1,8 @@
 import requests
 
 import mongoengine
-from mongoengine import Document, StringField, BooleanField, URLField, DateTimeField
 import time
-
-
-class Airlines(Document):
-    name = StringField()
-    code = StringField(unique=True)
-    isLowCost = BooleanField()
-    logo = URLField()
-    createdAt = DateTimeField()
-    updatedAt = DateTimeField()
+from models.airlinemodel import Airlines
 
 
 if __name__ == '__main__':
@@ -23,13 +14,14 @@ if __name__ == '__main__':
     airline_data = airline.json()
 
     for airline in airline_data:
-        a = Airlines.objects.get(code=airline.get("code"))
-        if a is None:
+        try:
+            a = Airlines.objects.get(code=airline.get("code"))
+        except Airlines.DoesNotExist:
             Airlines(
-                name=airline.get("name"),
-                code=airline.get("code"),
-                isLowCost=airline.get("is_lowcost"),
-                logo=airline.get("logo"),
-                createdAt=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                updatedAt=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            ).save()
+             name=airline.get("name"),
+             code=airline.get("code"),
+             isLowCost=airline.get("is_lowcost"),
+             logo=airline.get("logo"),
+             createdAt=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+             updatedAt=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+             ).save()

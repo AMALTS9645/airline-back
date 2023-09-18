@@ -1,27 +1,9 @@
-import json
 import requests
 
 import mongoengine
-from mongoengine import Document, StringField, DecimalField, IntField, LongField, DateTimeField
 import time
 
-
-class Airports(Document):
-    code = StringField(unique=True)
-    name = StringField()
-    city = StringField()
-    state = StringField()
-    country = StringField()
-    runway_length = LongField()
-    icao = StringField()
-    direct_flights = IntField()
-    carriers = IntField()
-    lat = DecimalField()
-    lon = DecimalField()
-    woeid = IntField()
-    tz = StringField()
-    createdAt = DateTimeField()
-    updatedAt = DateTimeField()
+from models.airportmodel import Airports
 
 
 if __name__ == '__main__':

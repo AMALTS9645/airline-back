@@ -2,6 +2,7 @@ from mongoengine import Document, IntField, DateTimeField, StringField
 
 
 class RoutesData(Document):
+    id = IntField()
     common_duration = IntField()
     min_duration = IntField()
     max_duration = IntField()
