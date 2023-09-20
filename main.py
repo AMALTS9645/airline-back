@@ -201,8 +201,11 @@ async def get_multi_recommendations(request_data: MultiFlightRecommendationReque
         }
 
         filter_dict = {
-            "airline_code__in": request_data.airlines,
+
         }
+
+        if request_data.airlines:
+            filter_dict["airline_code__in"] = request_data.airlines
 
         if request_data.classfields is not None:
             if "BUS".lower() in [item.lower() for item in request_data.classfields]:
