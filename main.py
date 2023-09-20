@@ -17,6 +17,7 @@ from models.basemodels.airportsresponse import AirportsResponse
 from models.basemodels.autocompletemodelresponse import AirportAutoResponse
 from models.basemodels.AirportAutoRequest import AirportAutoRequest
 from models.basemodels.detailed_itinerary import ItineraryRequest, ItineraryResponse
+from models.basemodels.recommend import Recommend
 app = FastAPI()
 
 
@@ -183,7 +184,6 @@ async def get_multi_recommendations(request_data: MultiFilterRequest):
 @app.post("/multi_city_flight_recommendation", response_model=List[MultiFlightRecommendationResponse])
 async def get_multi_recommendations(request_data: MultiFlightRecommendationRequest):
     try:
-
         weekday_to_day = {
             0: "day1",
             1: "day2",
@@ -200,71 +200,68 @@ async def get_multi_recommendations(request_data: MultiFlightRecommendationReque
             2: "FIRST"
         }
 
-        filter_class = {
-        }
-
-        filter_date = {
-        }
-
-        arrivals = []
-
-        departures = []
-
-        for dateItem in request_data.routes:
-            arrivals.append(dateItem.arrival)
-            departures.append(dateItem.departure)
-            pendulum_datetime = pendulum.parse(dateItem.date)
-            weekday_number = pendulum_datetime.weekday()
-            day_field = weekday_to_day.get(weekday_number)
-            filter_date[day_field] = "yes"
-
-        if classess.get(0).lower() in [item.lower() for item in request_data.classfields]:
-            filter_class["class_business"] = 1
-
-        if classess.get(1).lower() in [item.lower() for item in request_data.classfields]:
-            filter_class["class_economy"] = 1
-
-        if classess.get(2).lower() in [item.lower() for item in request_data.classfields]:
-            filter_class["class_first"] = 1
-
         filter_dict = {
             "airline_code__in": request_data.airlines,
-            **filter_class,
-            **filter_date,
-            "iata_from__in": arrivals,
-            "iata_to__in": departures
         }
 
-        routes = RoutesData.objects(**filter_dict)
+        if request_data.classfields is not None:
+            if "BUS".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_business"] = 1
+
+            if "ECO".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_economy"] = 1
+
+            if "FIRST".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_first"] = 1
 
         recommendations = []
 
-        for route in routes:
-            recommendations.append(MultiFlightRecommendationResponse(
+        for dateItem in request_data.routes:
+            pendulum_datetime = pendulum.parse(dateItem.date)
+            weekday_number = pendulum_datetime.weekday()
+            day_field = weekday_to_day.get(weekday_number)
+            existing_route = RoutesData.objects(
+                **{day_field: "yes"},
+                iata_from=dateItem.departure,
+                iata_to=dateItem.arrival,
+                **filter_dict
+            )
 
-                common_duration=route.common_duration,
-                min_duration=route.min_duration,
-                max_duration=route.max_duration,
-                flights_per_day=route.flights_per_day,
-                flights_per_week=route.flights_per_week,
-                airline_name=route.airline_name,
-                airline_code=route.airline_code,
-                day1=route.day1,
-                day2=route.day2,
-                day3=route.day3,
-                day4=route.day4,
-                day5=route.day5,
-                day6=route.day6,
-                day7=route.day7,
-                iata_from=route.iata_from,
-                iata_to=route.iata_to,
-                class_business=route.class_business,
-                class_economy=route.class_economy,
-                class_first=route.class_first,
-                is_scheduled_passenger=route.is_scheduled_passenger,
-                is_cargo=route.is_cargo
-            ))
+            resultroute = []
 
+            for routedataItem in existing_route:
+                resultroute.append(Recommend(
+                    uid=routedataItem.uid,
+                    common_duration=routedataItem.common_duration,
+                    min_duration=routedataItem.min_duration,
+                    max_duration=routedataItem.max_duration,
+                    flights_per_day=routedataItem.flights_per_day,
+                    flights_per_week=routedataItem.flights_per_week,
+                    airline_name=routedataItem.airline_name,
+                    airline_code=routedataItem.airline_code,
+                    day1=routedataItem.day1,
+                    day2=routedataItem.day2,
+                    day3=routedataItem.day3,
+                    day4=routedataItem.day4,
+                    day5=routedataItem.day5,
+                    day6=routedataItem.day6,
+                    day7=routedataItem.day7,
+                    airport_from=routedataItem.airport_from,
+                    airport_to=routedataItem.airport_to,
+                    iata_from=routedataItem.iata_from,
+                    iata_to=routedataItem.iata_to,
+                    class_business=routedataItem.class_business,
+                    class_economy=routedataItem.class_economy,
+                    class_first=routedataItem.class_first,
+                    is_scheduled_passenger=routedataItem.is_scheduled_passenger,
+                    is_cargo=routedataItem.is_cargo
+                ))
+            recommendations.append({
+                "date": dateItem.date,
+                "departure": dateItem.departure,
+                "arrival": dateItem.arrival,
+                "results": resultroute
+            })
         return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
