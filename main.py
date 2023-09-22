@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from mongoengine import connect
+from mongoengine import connect, Q
 import pendulum
 from typing import List
 
@@ -18,7 +18,17 @@ from models.basemodels.autocompletemodelresponse import AirportAutoResponse
 from models.basemodels.AirportAutoRequest import AirportAutoRequest
 from models.basemodels.detailed_itinerary import ItineraryRequest, ItineraryResponse
 from models.basemodels.recommend import Recommend
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/airlines/all", response_model=List[AirlinesResponse])
@@ -139,15 +149,15 @@ async def get_recommendations(request_data: RecommendationRequest):
 async def get_multi_recommendations(request_data: MultiFilterRequest):
     try:
         filter_dict = {
-            "airline_code__in": request_data.airline_codes,
+            "airline_code__in": request_data.airline_codes
         }
 
-        if request_data.class_business == 1:
-            filter_dict["class_business"] = 1
-        if request_data.class_economy == 1:
-            filter_dict["class_economy"] = 1
-        if request_data.class_first == 1:
-            filter_dict["class_first"] = 1
+        if request_data.class_business is not None:
+            filter_dict["class_business"] = request_data.class_business
+        if request_data.class_economy is not None:
+            filter_dict["class_economy"] = request_data.class_business
+        if request_data.class_first is not None:
+            filter_dict["class_first"] = request_data.class_first
 
         routes = RoutesData.objects(**filter_dict)
 
@@ -273,7 +283,11 @@ async def get_multi_recommendations(request_data: MultiFlightRecommendationReque
 @app.post("/airport/autocomplete", response_model=List[AirportAutoResponse])
 async def airport_autocomplete(request_data: AirportAutoRequest):
     try:
-        matching_airports = Airports.objects(name__iregex=f".*{request_data.search_string}.*")[:request_data.limit]
+        if len(request_data.search_string) < 3:
+            raise HTTPException(status_code=400, detail="Search string must have at least three letters.")
+
+        matching_airports = Airports.objects(Q(name__iregex=f".*{request_data.search_string}.*") |
+                                             Q(code__iregex=f".*{request_data.search_string}.*"))[:request_data.limit]
 
         if not matching_airports:
             raise HTTPException(status_code=404, detail="No matching airports found.")
