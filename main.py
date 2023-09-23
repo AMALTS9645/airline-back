@@ -107,14 +107,27 @@ async def get_recommendations(request_data: RecommendationRequest):
 
         day_field = weekday_to_day.get(weekday_number)
 
+        filter_dict = {
+
+        }
+
+        if request_data.classfields:
+            if "BUS".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_business"] = 1
+
+            if "ECO".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_economy"] = 1
+
+            if "FIRST".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_first"] = 1
+
         routes = RoutesData.objects(
             iata_from=request_data.iatafrom,
             iata_to=request_data.iatato,
             **{day_field: "yes"},
-            class_business=request_data.class_business,
-            class_economy=request_data.class_economy,
-            class_first=request_data.class_first
+            **filter_dict
         )
+
         recommendations = []
         for route in routes:
             recommendations.append(RecommendationResponse(
@@ -149,15 +162,21 @@ async def get_recommendations(request_data: RecommendationRequest):
 async def get_multi_recommendations(request_data: MultiFilterRequest):
     try:
         filter_dict = {
-            "airline_code__in": request_data.airline_codes
+
         }
 
-        if request_data.class_business is not None:
-            filter_dict["class_business"] = request_data.class_business
-        if request_data.class_economy is not None:
-            filter_dict["class_economy"] = request_data.class_business
-        if request_data.class_first is not None:
-            filter_dict["class_first"] = request_data.class_first
+        if request_data.airline_codes:
+            filter_dict["airline_code__in"] = request_data.airline_codes
+
+        if request_data.classfields is not None:
+            if "BUS".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_business"] = 1
+
+            if "ECO".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_economy"] = 1
+
+            if "FIRST".lower() in [item.lower() for item in request_data.classfields]:
+                filter_dict["class_first"] = 1
 
         routes = RoutesData.objects(**filter_dict)
 

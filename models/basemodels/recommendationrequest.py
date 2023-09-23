@@ -1,10 +1,9 @@
 from pydantic import BaseModel
+from typing import Optional, List
 
 
 class RecommendationRequest(BaseModel):
     iatafrom: str
     iatato: str
     dateoftravel: str
-    class_business: int
-    class_economy: int
-    class_first: int
+    classfields: Optional[List[str]] = None
